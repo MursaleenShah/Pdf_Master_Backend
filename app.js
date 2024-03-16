@@ -4,6 +4,9 @@ const cors = require("cors");
 const multer = require("multer");
 const dotenv = require("dotenv");
 dotenv.config();
+//require pdf schema
+require("./pdfDetails");
+const pdfSchema = mongoose.model("PdfDetails");
 //const upload = multer({ dest: './files' })
 const app = express();
 app.use(express.json());
@@ -13,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 main().catch(err => console.log(err));
 async function main(){
     await mongoose.connect(process.env.MONGODB);
-    console.log("connected to mongodb");
+    
 
 
 app.get("/",async(req,res)=>{
@@ -35,7 +38,19 @@ const storage = multer.diskStorage({
 
 app.post("/upload-files",upload.single("file"),async(req,res)=>{
     console.log(req.file);
-    res.send("hii");
+    
+    const title = req.body.title;
+    const fileName = req.file.filename;
+    try {
+      await pdfSchema.create({title : title, pdf:fileName});
+      res.send({status:"ok"});
+      
+    } catch (error) {
+      res.json({status:error});
+      
+    }
+    
+    
 })
 
 
