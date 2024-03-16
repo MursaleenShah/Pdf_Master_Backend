@@ -12,6 +12,8 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
+//serve files folder as static(for accessibility)
+app.use("/files",express.static("files"));
 
 main().catch(err => console.log(err));
 async function main(){
@@ -36,6 +38,7 @@ const storage = multer.diskStorage({
   
   const upload = multer({ storage: storage });
 
+//route to post files on server and save on database
 app.post("/upload-files",upload.single("file"),async(req,res)=>{
     console.log(req.file);
     
@@ -51,6 +54,12 @@ app.post("/upload-files",upload.single("file"),async(req,res)=>{
     }
     
     
+});
+//route to get data from server
+app.get("/get-files",async(req,res)=>{
+  pdfSchema.find({}).then((data)=>{
+    res.send({status:"ok",data:data});
+  })
 })
 
 
