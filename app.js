@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require("cors");
 const multer = require("multer");
 const dotenv = require("dotenv");
+const fs = require("fs");
+const {PDFDocument} = require("pdf-lib");
 dotenv.config();
 //require pdf schema
 require("./pdfDetails");
@@ -44,8 +46,10 @@ app.post("/upload-files",upload.single("file"),async(req,res)=>{
     
     const title = req.body.title;
     const fileName = req.file.filename;
+    //extract page numbers from req
+    const pageNumbers = req.body.pageNumbers;
     try {
-      await pdfSchema.create({title : title, pdf:fileName});
+      await pdfSchema.create({title : title, pdf:fileName,pageNumbers:pageNumbers});
       res.send({status:"ok"});
       
     } catch (error) {
@@ -60,7 +64,71 @@ app.get("/get-files",async(req,res)=>{
   pdfSchema.find({}).then((data)=>{
     res.send({status:"ok",data:data});
   })
-})
+});
+
+//route to download the modified pdf based on pagenumber
+
+app.get("/get-modified-pdf/:id", async (req, res) => {
+  const pdfDetails = await pdfSchema.findById(req.params.id);
+  const filePath = `./files/${pdfDetails.pdf}`;
+
+  try {
+    const pdfDoc = await PDFDocument.load(fs.readFileSync(filePath));
+    const pageNumbers = pdfDetails.pageNumbers.split(',').map(page => parseInt(page.trim())); // parse page numbers
+    const modifiedPdfDoc = await PDFDocument.create();
+
+    // Copy pages from the original PDF document
+    for (const pageNumber of pageNumbers) {
+      const [copiedPage] = await modifiedPdfDoc.copyPages(pdfDoc, [pageNumber - 1]); // Page numbers are 0-based
+      modifiedPdfDoc.addPage(copiedPage);
+    }
+
+    // Save modified PDF to a new file
+    const modifiedPdfBytes = await modifiedPdfDoc.save();
+    const modifiedFileName = `modified_${pdfDetails.pdf}`;
+    fs.writeFileSync(`./files/${modifiedFileName}`, modifiedPdfBytes);
+
+    res.download(`./files/${modifiedFileName}`);
+  } catch (error) {
+    console.error("Error modifying PDF:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+
+
+
+
+
+
+// app.get("/get-modified-pdf/:id", async (req, res) => {
+//   const pdfDetails = await pdfSchema.findById(req.params.id);
+//   const filePath = `./files/${pdfDetails.pdf}`;
+
+//   try {
+//     const pdfDoc = await PDFDocument.load(fs.readFileSync(filePath));
+//     const pageNumbers = pdfDetails.pageNumbers.split(',').map(page => parseInt(page.trim())); // Parse page numbers
+//     const modifiedPdfDoc = await PDFDocument.create();
+
+//     // Add specified pages to modified PDF
+//     for (const pageNumber of pageNumbers) {
+//       const page = pdfDoc.getPage(pageNumber - 1); // Page numbers are 1-based
+//       const copiedPage = await modifiedPdfDoc.addPage(page);
+//       copiedPage.setWidth(page.getWidth());
+//       copiedPage.setHeight(page.getHeight());
+//     }
+
+//     // Save modified PDF to a new file
+//     const modifiedPdfBytes = await modifiedPdfDoc.save();
+//     const modifiedFileName = `modified_${pdfDetails.pdf}`;
+//     fs.writeFileSync(`./files/${modifiedFileName}`, modifiedPdfBytes);
+
+//     res.download(`./files/${modifiedFileName}`);
+//   } catch (error) {
+//     console.error("Error modifying PDF:", error);
+//     res.status(500).send("Internal Server Error");
+//   }
+// });
 
 
 
