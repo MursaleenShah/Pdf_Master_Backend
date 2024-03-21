@@ -7,12 +7,12 @@ Ensure that you have Node.js installed before proceeding.
 
 # Steps to Install
 1. Clone this repository.
-2. Install dependencies using 'npm install'.
+2. Install dependencies using `npm install`.
 
 # Usage
 1. Make sure MongoDB is installed and running on your system.
 2. Create a .env file in the project root directory and add your MongoDB connection string (MONGODB=your_connection_string).
-3. Start the server by running 'npm run dev' or 'nodemon app.js'.
+3. Start the server by running `npm run dev` or `nodemon app.js`.
 
 # Endpoints
 1. `POST /upload-files`: Upload a PDF file to the server. Required parameters:
@@ -28,6 +28,6 @@ Ensure that you have Node.js installed before proceeding.
 3. Multer: Middleware for handling multipart/form-data.
 4. pdf-lib: Library for creating and modifying PDF documents.
 
-# Contributions
+# Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
